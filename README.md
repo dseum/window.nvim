@@ -16,24 +16,26 @@ The plugin implements the concept of closing a buffer, which encompasses both de
 You can use any plugin manager. Below is an example with `lazy.nvim` along with helpful keymaps.
 
 ```lua
-	{
-		"dseum/window.nvim",
-		lazy = false,
-		priority = 100,
-		keys = {
-			{
-				"<leader>ww",
-				function()
-					require("window").close_buf()
-				end,
-			},
-			{
-				"<leader>wi",
-				function()
-					require("window").inspect()
-				end,
-			},
-		},
-	},
+    {
+        "dseum/window.nvim",
+        dev = true,
+        lazy = false,
+        priority = 100,
+        opts = {},
+        keys = {
+            {
+                "<leader>ww",
+                function()
+                    require("window").close_buf()
+                end,
+            },
+            {
+                "<leader>wi",
+                function()
+                    require("window").inspect()
+                end,
+            },
+        },
+    },
 
 ```
