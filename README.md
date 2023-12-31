@@ -11,31 +11,33 @@ The plugin implements the concept of closing a buffer, which encompasses both de
 - If closing a buffer, the previously used buffer in that window will be shown. If there are no previous buffers, a blank plugin buffer is shown.
 - Windows won't close on buffer closures. You must manually command a window to close.
 
-## Install
+## Installation
 
 You can use any plugin manager. Below is an example with `lazy.nvim` along with helpful keymaps.
 
 ```lua
-    {
-        "dseum/window.nvim",
-        dev = true,
-        lazy = false,
-        priority = 100,
-        opts = {},
-        keys = {
-            {
-                "<leader>ww",
-                function()
-                    require("window").close_buf()
-                end,
-            },
-            {
-                "<leader>wi",
-                function()
-                    require("window").inspect()
-                end,
-            },
-        },
+  {
+    "dseum/window.nvim",
+    lazy = false,
+    priority = 100,
+    opts = {},
+    keys = {
+      {
+        "<leader>ww",
+        function()
+          require("window").close_buf()
+        end,
+      },
+      {
+        "<leader>wi",
+        function()
+          require("window").inspect()
+        end,
+      },
     },
-
+  }
 ```
+
+## Similar
+
+- [echasnovski/mini.bufremove](https://github.com/echasnovski/mini.bufremove)
