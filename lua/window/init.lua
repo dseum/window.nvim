@@ -149,7 +149,11 @@ end
 M.inspect = function()
   print(vim.inspect(bufs))
   print(vim.inspect(wins))
-  print(vim.inspect(vim.api.nvim_cmd({ cmd = "ls", bang = true }, { output = true })))
+  print(
+    vim.inspect(
+      vim.api.nvim_cmd({ cmd = "ls", bang = true }, { output = true })
+    )
+  )
 end
 
 M.close_buf = function()
@@ -170,14 +174,25 @@ M.close_buf = function()
     if vim.tbl_count(wins[winid].bufs) == 0 then
       print("Create")
       local new_bufnr = vim.api.nvim_create_buf(true, true)
-      vim.api.nvim_buf_set_text(new_bufnr, 0, 0, 0, 0, { "No buffers open in window." })
+      vim.api.nvim_buf_set_text(
+        new_bufnr,
+        0,
+        0,
+        0,
+        0,
+        { "No buffers open in window." }
+      )
       vim.api.nvim_set_option_value("modifiable", false, { buf = new_bufnr })
       vim.api.nvim_set_option_value("buftype", "nofile", {
         buf = new_bufnr,
       })
       vim.api.nvim_win_set_buf(winid, new_bufnr)
       vim.api.nvim_set_option_value("number", false, { scope = "local" })
-      vim.api.nvim_set_option_value("relativenumber", false, { scope = "local" })
+      vim.api.nvim_set_option_value(
+        "relativenumber",
+        false,
+        { scope = "local" }
+      )
     else
       vim.api.nvim_win_set_buf(winid, wins[winid].root.nr)
     end
