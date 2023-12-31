@@ -19,41 +19,38 @@ You can use any plugin manager. Below is an example with `lazy.nvim` along with 
 
 ```lua
 {
-    "dseum/window.nvim",
-    dev = true,
-    lazy = false,
-    priority = 100,
-    opts = {
-      -- Closing last managed buffer should close window 
-      close_window = true
+  "dseum/window.nvim",
+  dev = true,
+  lazy = false,
+  priority = 100,
+  opts = {},
+  keys = {
+    {
+      "<leader>ww",
+      function()
+        require("window").close_buf()
+      end,
     },
-    keys = {
-      {
-        "<leader>ww",
-        function()
-          require("window").close_buf()
-        end,
-      },
-      {
-        "<leader>wi",
-        function()
-          require("window").inspect()
-        end,
-      },
-      {
-        "<C-w>s",
-        function()
-          require("window").split_win("h")
-        end,
-      },
-      {
-        "<C-w>v",
-        function()
-          require("window").split_win("v")
-        end,
-      },
+    {
+      "<leader>wi",
+      function()
+        require("window").inspect()
+      end,
     },
-  }
+    {
+      "<C-w>s",
+      function()
+        require("window").split_win("h")
+      end,
+    },
+    {
+      "<C-w>v",
+      function()
+        require("window").split_win("v")
+      end,
+    },
+  },
+}
 ```
 
 ## Similar
