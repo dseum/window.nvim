@@ -2,7 +2,7 @@ local M = {}
 
 --
 local opts = {
-  close_window = false,
+  close_window = true,
 }
 
 local bufs = {}
@@ -157,7 +157,7 @@ M.setup = function(given_opts)
   -- Set `opts`
   opts = vim.tbl_extend("keep", given_opts, opts)
 
-  -- Allow hidden buffers
+  -- Allow hidden buffers (required)
   vim.o.hidden = true
 
   -- Buffer open autcmd in neovim lua
@@ -208,7 +208,7 @@ M.setup = function(given_opts)
   })
 end
 
---- Inspects internal state and prints
+---Inspects internal state and prints
 M.inspect = function()
   print(vim.inspect(bufs))
   print(vim.inspect(wins))
@@ -219,7 +219,25 @@ M.inspect = function()
   )
 end
 
---- Closes current buffer
+---Splits window by orientation and maintains original layout and focus
+---@param orientation "h"|"v"
+---@param winid number?
+M.split_win = function(orientation, winid)
+  winid = winid or vim.fn.win_getid()
+
+  if orientation == "h" then
+    vim.api.nvim_win_call(winid, function()
+      vim.cmd("rightbelow split")
+    end)
+  elseif orientation == "v" then
+    vim.api.nvim_win_call(winid, function()
+      vim.cmd("rightbelow vsplit")
+    end)
+  end
+  vim.fn.win_gotoid(winid)
+end
+
+---Closes current buffer
 ---@param target table?
 M.close_buf = vim.schedule_wrap(function(target)
   local bufnr

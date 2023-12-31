@@ -10,6 +10,7 @@ The plugin implements the concept of closing a buffer, which encompasses both de
 
 - If closing a buffer, the previously used buffer in that window will be shown. If there are no previous buffers, a blank plugin buffer is shown.
 - Windows won't close on buffer closures. You must manually command a window to close.
+- Use `split_win` to split while maintaining original window layout and focus
 - This works with whatever plugin you use to navigate buffers.
 
 ## Installation
@@ -17,12 +18,14 @@ The plugin implements the concept of closing a buffer, which encompasses both de
 You can use any plugin manager. Below is an example with `lazy.nvim` along with helpful keymaps.
 
 ```lua
-  {
+{
     "dseum/window.nvim",
+    dev = true,
     lazy = false,
     priority = 100,
     opts = {
-      close_window = true -- Whether closing last managed buffer should close window
+      -- Closing last managed buffer should close window 
+      close_window = true
     },
     keys = {
       {
@@ -37,9 +40,20 @@ You can use any plugin manager. Below is an example with `lazy.nvim` along with 
           require("window").inspect()
         end,
       },
+      {
+        "<C-w>s",
+        function()
+          require("window").split_win("h")
+        end,
+      },
+      {
+        "<C-w>v",
+        function()
+          require("window").split_win("v")
+        end,
+      },
     },
-  }
-```
+  }```
 
 ## Similar
 
