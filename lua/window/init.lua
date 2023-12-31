@@ -1,6 +1,9 @@
 local M = {}
 
-local opts = {}
+--
+local opts = {
+  close_window = false,
+}
 
 local bufs = {}
 local wins = {}
@@ -39,7 +42,6 @@ local function remove_buf(winid, bufnr)
   end
 
   local buf = wins[winid].bufs[bufnr]
-  wins[winid].bufs[bufnr] = nil
   if buf == wins[winid].root then
     wins[winid].root = buf.prev
   end
@@ -50,12 +52,15 @@ local function remove_buf(winid, bufnr)
   if buf.next ~= nil then
     buf.next.prev = buf.prev
   end
+
+  wins[winid].bufs[bufnr] = nil
 end
 
 ---Removes buffer and sync its list of windows
 ---@param winid number
 ---@param bufnr number
 local function remove_buf_and_sync(winid, bufnr)
+  -- Check if buffer is managed
   if wins[winid] == nil then
     return
   end
@@ -71,41 +76,88 @@ end
 ---@param winid number
 ---@param bufnr number
 local function push_buf(winid, bufnr)
+  -- Delete `WindowLanding` buffer if it exists since replaced by `bufnr` buffer
   if wins[winid] == nil then
+    -- New window
     wins[winid] = {
       root = nil,
       bufs = {},
     }
+  -- elseif
+  --   wins[winid].root ~= nil
+  --   and vim.api.nvim_get_option_value("filetype", {
+  --       buf = wins[winid].root.nr,
+  --     })
+  --     == "WindowLanding"
+  -- then
+  --   local landing_bufnr = wins[winid].root.nr
+  --   remove_buf_and_sync(winid, landing_bufnr)
+  --   if bufs[landing_bufnr] == nil then
+  --     vim.api.nvim_buf_delete(landing_bufnr, { force = true })
+  --   end
   else
     remove_buf(winid, bufnr)
   end
-  local window = wins[winid]
 
   -- Create new root node
   local root = {
-    prev = window.root,
+    prev = wins[winid].root,
     next = nil,
     nr = bufnr,
   }
-  if window.root ~= nil then
-    window.root.next = root
+  if wins[winid].root ~= nil then
+    wins[winid].root.next = root
   end
-  window.root = root
+  wins[winid].root = root
 
   -- Assign new node to buffer
-  window.bufs[bufnr] = root
+  wins[winid].bufs[bufnr] = root
 end
 
 ---Adds buffer and sync its list of windows
 ---@param winid number
 ---@param bufnr number
 local function push_buf_and_sync(winid, bufnr)
-  if not vim.api.nvim_buf_get_option(bufnr, "buflisted") then
-    return
-  end
-
   push_buf(winid, bufnr)
   push_win(winid, bufnr)
+end
+
+---@type number?
+local landing_bufnr = nil
+
+local function push_landing_buf(winid, bufnr)
+  if landing_bufnr == nil then
+    landing_bufnr = vim.api.nvim_create_buf(true, true)
+
+    -- Critical
+    vim.api.nvim_set_option_value("buftype", "nofile", {
+      buf = landing_bufnr,
+    })
+    vim.api.nvim_buf_set_text(
+      landing_bufnr,
+      0,
+      0,
+      0,
+      0,
+      { "No buffers open in window." }
+    )
+    vim.api.nvim_buf_set_name(landing_bufnr, "window://landing")
+    vim.api.nvim_set_option_value("readonly", true, { buf = landing_bufnr })
+    vim.api.nvim_set_option_value("modifiable", false, { buf = landing_bufnr })
+    vim.api.nvim_set_option_value("modified", false, { buf = landing_bufnr })
+
+    -- Details
+    vim.api.nvim_set_option_value("filetype", "WindowLanding", {
+      buf = landing_bufnr,
+    })
+    vim.api.nvim_set_option_value("buflisted", false, { buf = landing_bufnr })
+    vim.api.nvim_win_set_buf(winid, landing_bufnr)
+    vim.api.nvim_set_option_value("number", false, { scope = "local" })
+    vim.api.nvim_set_option_value("relativenumber", false, { scope = "local" })
+  else
+    vim.api.nvim_win_set_buf(winid, landing_bufnr)
+  end
+  return landing_bufnr
 end
 
 ---Setup
@@ -177,54 +229,66 @@ M.inspect = function()
 end
 
 --- Closes current buffer
-M.close_buf = function()
-  local bufnr = vim.api.nvim_get_current_buf()
-  local winid = vim.fn.win_getid()
-
-  local deleting = vim.tbl_count(bufs[bufnr]) == 1
-  if
-    not deleting
-    or not vim.api.nvim_get_option_value("modified", { buf = bufnr })
-    or vim.fn.confirm(
-        string.format(
-          "Buffer %d has unsaved changes. Close forcefully and discard?",
-          bufnr
-        ),
-        "&Yes\n&No",
-        2,
-        "Question"
-      )
-      == 1
-  then
-    remove_buf_and_sync(winid, bufnr)
-    if vim.tbl_count(wins[winid].bufs) == 0 then
-      local new_bufnr = vim.api.nvim_create_buf(true, true)
-      vim.api.nvim_buf_set_text(
-        new_bufnr,
-        0,
-        0,
-        0,
-        0,
-        { "No buffers open in window." }
-      )
-      vim.api.nvim_set_option_value("modifiable", false, { buf = new_bufnr })
-      vim.api.nvim_set_option_value("buftype", "nofile", {
-        buf = new_bufnr,
-      })
-      vim.api.nvim_win_set_buf(winid, new_bufnr)
-      vim.api.nvim_set_option_value("number", false, { scope = "local" })
-      vim.api.nvim_set_option_value(
-        "relativenumber",
-        false,
-        { scope = "local" }
-      )
-    else
-      vim.api.nvim_win_set_buf(winid, wins[winid].root.nr)
+---@param target table?
+M.close_buf = vim.schedule_wrap(function(target)
+  local bufnr
+  local winid
+  if target == nil then
+    bufnr = vim.api.nvim_get_current_buf()
+    winid = vim.fn.win_getid()
+  else
+    if target.bufnr == nil or target.winid == nil then
+      return
     end
-    if deleting then
-      vim.api.nvim_buf_delete(bufnr, { force = true })
+    bufnr = target.bufnr
+    winid = target.winid
+  end
+
+  -- Check if buffer is managed in current window
+  if wins[winid].bufs[bufnr] == nil then
+    return
+  end
+
+  if
+    vim.api.nvim_get_option_value("filetype", {
+      buf = bufnr,
+    }) ~= "WindowLanding"
+  then
+    local deleting = vim.tbl_count(bufs[bufnr]) == 1
+    if
+      not deleting
+      or not vim.api.nvim_get_option_value("modified", { buf = bufnr })
+      or vim.fn.confirm(
+          string.format(
+            "Buffer %d has unsaved changes. Close forcefully and discard?",
+            bufnr
+          ),
+          "&Yes\n&No",
+          2,
+          "Question"
+        )
+        == 1
+    then
+      remove_buf_and_sync(winid, bufnr)
+      local closing_window = opts.close_window and #vim.api.nvim_list_wins() > 1
+      if vim.tbl_count(wins[winid].bufs) == 0 then
+        if closing_window then
+          -- Close window
+          vim.api.nvim_win_call(winid, function()
+            vim.cmd.close({ bang = true })
+          end)
+        else
+          -- Either `opts.close_window` is false or there is only one window
+          push_landing_buf(winid, bufnr)
+        end
+      else
+        vim.api.nvim_win_set_buf(winid, wins[winid].root.nr)
+      end
+      if deleting then
+        vim.api.nvim_buf_delete(bufnr, { force = true })
+      end
     end
   end
-end
+end)
 
 return M
