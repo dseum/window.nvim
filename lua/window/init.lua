@@ -5,7 +5,7 @@ local opts = {}
 local bufs = {}
 local wins = {}
 
----Remove window from list of windows buffer is in
+---Removes window from list of windows buffer is in
 ---@param winid number
 ---@param bufnr number
 local function remove_win(winid, bufnr)
@@ -17,7 +17,7 @@ local function remove_win(winid, bufnr)
   end
 end
 
----Add window to list of windows buffer is in
+---Adds window to list of windows buffer is in
 ---@param winid number
 ---@param bufnr number
 local function push_win(winid, bufnr)
@@ -27,7 +27,7 @@ local function push_win(winid, bufnr)
   bufs[bufnr][winid] = true
 end
 
----Remove buffer from list of buffers in window
+---Removes buffer from list of buffers in window
 ---@param winid number
 ---@param bufnr number
 local function remove_buf(winid, bufnr)
@@ -52,7 +52,7 @@ local function remove_buf(winid, bufnr)
   end
 end
 
----Remove buffer and sync its list of windows
+---Removes buffer and sync its list of windows
 ---@param winid number
 ---@param bufnr number
 local function remove_buf_and_sync(winid, bufnr)
@@ -67,7 +67,7 @@ local function remove_buf_and_sync(winid, bufnr)
   remove_win(winid, bufnr)
 end
 
----Add buffer to list of buffers in window
+---Adds buffer to list of buffers in window
 ---@param winid number
 ---@param bufnr number
 local function push_buf(winid, bufnr)
@@ -96,7 +96,7 @@ local function push_buf(winid, bufnr)
   window.bufs[bufnr] = root
 end
 
----Add buffer and sync its list of windows
+---Adds buffer and sync its list of windows
 ---@param winid number
 ---@param bufnr number
 local function push_buf_and_sync(winid, bufnr)
@@ -165,7 +165,7 @@ M.setup = function(given_opts)
   })
 end
 
---- Inspect internal state
+--- Inspects internal state and prints
 M.inspect = function()
   print(vim.inspect(bufs))
   print(vim.inspect(wins))
@@ -176,15 +176,20 @@ M.inspect = function()
   )
 end
 
---- Close buffer
+--- Closes current buffer
 M.close_buf = function()
   local bufnr = vim.api.nvim_get_current_buf()
   local winid = vim.fn.win_getid()
 
+  local deleting = vim.tbl_count(bufs[bufnr]) == 1
   if
-    not vim.api.nvim_get_option_value("modified", { buf = bufnr })
+    not deleting
+    or not vim.api.nvim_get_option_value("modified", { buf = bufnr })
     or vim.fn.confirm(
-        string.format("Buffer %d has unsaved changes. Close forcefully?", bufnr),
+        string.format(
+          "Buffer %d has unsaved changes. Close forcefully and discard?",
+          bufnr
+        ),
         "&Yes\n&No",
         2,
         "Question"
@@ -216,7 +221,7 @@ M.close_buf = function()
     else
       vim.api.nvim_win_set_buf(winid, wins[winid].root.nr)
     end
-    if bufs[bufnr] == nil then
+    if deleting then
       vim.api.nvim_buf_delete(bufnr, { force = true })
     end
   end
