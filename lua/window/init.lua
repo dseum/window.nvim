@@ -8,7 +8,7 @@ local opts = {
 local bufs = {}
 local wins = {}
 
----Removes window from list of windows buffer is in
+--- Removes window from list of windows buffer is in
 ---@param winid number
 ---@param bufnr number
 local function remove_win(winid, bufnr)
@@ -20,7 +20,7 @@ local function remove_win(winid, bufnr)
   end
 end
 
----Adds window to list of windows buffer is in
+--- Adds window to list of windows buffer is in
 ---@param winid number
 ---@param bufnr number
 local function push_win(winid, bufnr)
@@ -30,7 +30,7 @@ local function push_win(winid, bufnr)
   bufs[bufnr][winid] = true
 end
 
----Removes buffer from list of buffers in window
+--- Removes buffer from list of buffers in window
 ---@param winid number
 ---@param bufnr number
 local function remove_buf(winid, bufnr)
@@ -56,7 +56,7 @@ local function remove_buf(winid, bufnr)
   wins[winid].bufs[bufnr] = nil
 end
 
----Removes buffer and sync its list of windows
+--- Removes buffer and sync its list of windows
 ---@param winid number
 ---@param bufnr number
 local function remove_buf_and_sync(winid, bufnr)
@@ -72,7 +72,7 @@ local function remove_buf_and_sync(winid, bufnr)
   remove_win(winid, bufnr)
 end
 
----Adds buffer to list of buffers in window
+--- Adds buffer to list of buffers in window
 ---@param winid number
 ---@param bufnr number
 local function push_buf(winid, bufnr)
@@ -102,7 +102,7 @@ local function push_buf(winid, bufnr)
   wins[winid].bufs[bufnr] = root
 end
 
----Adds buffer and sync its list of windows
+--- Adds buffer and sync its list of windows
 ---@param winid number
 ---@param bufnr number
 local function push_buf_and_sync(winid, bufnr)
@@ -113,7 +113,7 @@ end
 ---@type number?
 local landing_bufnr = nil
 
----Creates landing buffer and readds to window when needed
+--- Creates landing buffer and readds to window when needed
 ---@param winid number
 ---@return number
 local function push_landing_buf(winid)
@@ -151,7 +151,7 @@ local function push_landing_buf(winid)
   return landing_bufnr
 end
 
----Setup
+--- Setup
 ---@param given_opts table?
 M.setup = function(given_opts)
   -- Set `opts`
@@ -208,7 +208,7 @@ M.setup = function(given_opts)
   })
 end
 
----Inspects internal state and prints
+--- Inspects internal state and prints
 M.inspect = function()
   print(vim.inspect(bufs))
   print(vim.inspect(wins))
@@ -219,7 +219,7 @@ M.inspect = function()
   )
 end
 
----Splits window by orientation and maintains original layout and focus
+--- Splits window by orientation and maintains original layout and focus
 ---@param orientation "h"|"v"
 ---@param winid number?
 M.split_win = function(orientation, winid)
@@ -237,7 +237,7 @@ M.split_win = function(orientation, winid)
   vim.fn.win_gotoid(winid)
 end
 
----Closes current buffer
+--- Closes current buffer
 ---@param target table?
 M.close_buf = vim.schedule_wrap(function(target)
   local bufnr
