@@ -125,7 +125,10 @@ end
 ---@type number?
 local landing_bufnr = nil
 
-local function push_landing_buf(winid, bufnr)
+---Creates landing buffer and readds to window when needed
+---@param winid number
+---@return number
+local function push_landing_buf(winid)
   if landing_bufnr == nil then
     landing_bufnr = vim.api.nvim_create_buf(true, true)
 
@@ -279,7 +282,7 @@ M.close_buf = vim.schedule_wrap(function(target)
           end)
         else
           -- Either `opts.close_window` is false or there is only one window
-          push_landing_buf(winid, bufnr)
+          push_landing_buf(winid)
         end
       else
         vim.api.nvim_win_set_buf(winid, wins[winid].root.nr)
