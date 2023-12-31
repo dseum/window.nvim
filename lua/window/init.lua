@@ -5,6 +5,9 @@ local opts = {}
 local bufs = {}
 local wins = {}
 
+---Remove window from list of windows buffer is in
+---@param winid number
+---@param bufnr number
 local function remove_win(winid, bufnr)
   if bufs[bufnr] ~= nil then
     bufs[bufnr][winid] = nil
@@ -14,6 +17,9 @@ local function remove_win(winid, bufnr)
   end
 end
 
+---Add window to list of windows buffer is in
+---@param winid number
+---@param bufnr number
 local function push_win(winid, bufnr)
   if bufs[bufnr] == nil then
     bufs[bufnr] = {}
@@ -21,6 +27,9 @@ local function push_win(winid, bufnr)
   bufs[bufnr][winid] = true
 end
 
+---Remove buffer from list of buffers in window
+---@param winid number
+---@param bufnr number
 local function remove_buf(winid, bufnr)
   if wins[winid] == nil then
     return
@@ -43,7 +52,10 @@ local function remove_buf(winid, bufnr)
   end
 end
 
-local function remove_buf_and_clean(winid, bufnr)
+---Remove buffer and sync its list of windows
+---@param winid number
+---@param bufnr number
+local function remove_buf_and_sync(winid, bufnr)
   if wins[winid] == nil then
     return
   end
@@ -55,6 +67,9 @@ local function remove_buf_and_clean(winid, bufnr)
   remove_win(winid, bufnr)
 end
 
+---Add buffer to list of buffers in window
+---@param winid number
+---@param bufnr number
 local function push_buf(winid, bufnr)
   if wins[winid] == nil then
     wins[winid] = {
@@ -81,7 +96,10 @@ local function push_buf(winid, bufnr)
   window.bufs[bufnr] = root
 end
 
-local function push_buf_and_clean(winid, bufnr)
+---Add buffer and sync its list of windows
+---@param winid number
+---@param bufnr number
+local function push_buf_and_sync(winid, bufnr)
   if not vim.api.nvim_buf_get_option(bufnr, "buflisted") then
     return
   end
@@ -90,6 +108,8 @@ local function push_buf_and_clean(winid, bufnr)
   push_win(winid, bufnr)
 end
 
+---Setup
+---@param given_opts table?
 M.setup = function(given_opts)
   -- Set `opts`
   opts = vim.tbl_extend("keep", given_opts, opts)
@@ -105,8 +125,8 @@ M.setup = function(given_opts)
     callback = function()
       local winid = vim.fn.win_getid()
       if vim.fn.win_gettype(winid) == "" then
-        local bufnr = tonumber(vim.fn.expand("<abuf>"))
-        push_buf_and_clean(winid, bufnr)
+        local bufnr = tonumber(vim.fn.expand("<abuf>")) --[[@as number]]
+        push_buf_and_sync(winid, bufnr)
       end
     end,
   })
@@ -116,8 +136,8 @@ M.setup = function(given_opts)
     callback = function()
       local winid = vim.fn.win_getid()
       if vim.fn.win_gettype(winid) == "" then
-        local bufnr = tonumber(vim.fn.expand("<abuf>"))
-        push_buf_and_clean(winid, bufnr)
+        local bufnr = tonumber(vim.fn.expand("<abuf>")) --[[@as number]]
+        push_buf_and_sync(winid, bufnr)
       end
     end,
   })
@@ -125,8 +145,7 @@ M.setup = function(given_opts)
   vim.api.nvim_create_autocmd({ "WinClosed" }, {
     group = augroup,
     callback = function()
-      local winid = tonumber(vim.fn.expand("<amatch>"))
-
+      local winid = tonumber(vim.fn.expand("<amatch>")) --[[@as number]]
       if wins[winid] ~= nil then
         for _, buf in pairs(wins[winid].bufs) do
           remove_win(winid, buf.nr)
@@ -139,13 +158,14 @@ M.setup = function(given_opts)
   vim.api.nvim_create_autocmd({ "BufUnload" }, {
     group = augroup,
     callback = function()
-      local bufnr = tonumber(vim.fn.expand("<abuf>"))
+      local bufnr = tonumber(vim.fn.expand("<abuf>")) --[[@as number]]
       local winid = vim.fn.win_getid()
-      remove_buf_and_clean(winid, bufnr)
+      remove_buf_and_sync(winid, bufnr)
     end,
   })
 end
 
+--- Inspect internal state
 M.inspect = function()
   print(vim.inspect(bufs))
   print(vim.inspect(wins))
@@ -156,6 +176,7 @@ M.inspect = function()
   )
 end
 
+--- Close buffer
 M.close_buf = function()
   local bufnr = vim.api.nvim_get_current_buf()
   local winid = vim.fn.win_getid()
@@ -170,9 +191,8 @@ M.close_buf = function()
       )
       == 1
   then
-    remove_buf_and_clean(winid, bufnr)
+    remove_buf_and_sync(winid, bufnr)
     if vim.tbl_count(wins[winid].bufs) == 0 then
-      print("Create")
       local new_bufnr = vim.api.nvim_create_buf(true, true)
       vim.api.nvim_buf_set_text(
         new_bufnr,
@@ -197,7 +217,6 @@ M.close_buf = function()
       vim.api.nvim_win_set_buf(winid, wins[winid].root.nr)
     end
     if bufs[bufnr] == nil then
-      print("Delete")
       vim.api.nvim_buf_delete(bufnr, { force = true })
     end
   end
