@@ -10,7 +10,6 @@ The plugin implements the concept of closing a buffer, which encompasses both de
 
 - If closing a buffer, the previously used buffer in that window will be shown. If there are no previous buffers, a blank plugin buffer is shown.
 - Windows won't close on buffer closures. You must manually command a window to close.
-- Remaps `<C-w>v` (vertical) and `<C-w>h` (horizontal) to open a new window in corresponding area while keeping original window in the same place
 - This works with whatever plugin you use to navigate buffers.
 
 ## Installation
