@@ -53,7 +53,8 @@ You can use any plugin manager. Below is an example with `lazy.nvim` along with 
         end,
       },
     },
-  }```
+  }
+```
 
 ## Similar
 
