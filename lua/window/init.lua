@@ -83,18 +83,6 @@ local function push_buf(winid, bufnr)
       root = nil,
       bufs = {},
     }
-  -- elseif
-  --   wins[winid].root ~= nil
-  --   and vim.api.nvim_get_option_value("filetype", {
-  --       buf = wins[winid].root.nr,
-  --     })
-  --     == "WindowLanding"
-  -- then
-  --   local landing_bufnr = wins[winid].root.nr
-  --   remove_buf_and_sync(winid, landing_bufnr)
-  --   if bufs[landing_bufnr] == nil then
-  --     vim.api.nvim_buf_delete(landing_bufnr, { force = true })
-  --   end
   else
     remove_buf(winid, bufnr)
   end
