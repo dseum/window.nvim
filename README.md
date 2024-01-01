@@ -33,12 +33,6 @@ You can use any plugin manager. Below is an example with `lazy.nvim` along with 
       end,
     },
     {
-      "<leader>wi",
-      function()
-        require("window").inspect()
-      end,
-    },
-    {
       "<C-w>s",
       function()
         require("window").split_win("h")
