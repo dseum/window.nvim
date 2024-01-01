@@ -1,16 +1,19 @@
 # window.nvim
 
-Closing a file shifts window layouts? The file disappears from all windows? What's the next buffer that'll appear? Make windows intuitive again. 
+Closing a file shifts window layouts? The file disappears from all windows? What's the next buffer that'll appear?
+
+Make windows intuitive again. 
 
 ## Features
 
-On setup, the plugin mandates the use of hidden buffers. In Vim, buffers can either be hidden or not. However, for some buffers, we don't always logically want deletion to affect their presence in other windows,especially in split layouts. Furthermore, we don't want to see buffers opened in one window to randomly appear in another window when cleaning up visible buffers.
+On setup, the plugin mandates `vim.o.hidden = true`, i.e. the use of hidden buffers. But that is not expressive enough for managing buffers.
 
-The plugin implements the concept of closing a buffer, which encompasses both deleting (wiping) and hiding buffers in an intuitive way. Each window has its own history of buffers that it manages, so only the expected buffers. 
+Logically, we want our actions on buffers in a window to be locally scoped. But because windows share all buffers, deletion of a buffer in one window will mean even if we cannot expect it to still live in another window we were previously editing the buffer. Furthermore, we do not know which buffer will appear next in that window since the decision is not based off a local stack.
 
-- If closing a buffer, the previously used buffer in that window will be shown. If there are no previous buffers, a blank plugin buffer is shown.
-- Windows won't close on buffer closures. You must manually command a window to close.
-- Use `split_win` to split while maintaining original window layout and focus
+This plugin allows the user to forget about the nuanaces of hiding, deleting, and wiping out a buffer. Instead, all of that is cleanly managed by the plugin to provide the single concept of "closing" a buffer with `close_buf`.
+
+- Windows keep a local stack of which buffers were previously used. You can always predict which buffer will appear next.
+- You can use `split_win` to split a window while maintaining the original window layout and focus.
 - This works with whatever plugin you use to navigate buffers.
 
 ## Installation
@@ -20,10 +23,8 @@ You can use any plugin manager. Below is an example with `lazy.nvim` along with 
 ```lua
 {
   "dseum/window.nvim",
-  dev = true,
   lazy = false,
-  priority = 100,
-  opts = {},
+  config = true,
   keys = {
     {
       "<leader>ww",
@@ -52,6 +53,19 @@ You can use any plugin manager. Below is an example with `lazy.nvim` along with 
   },
 }
 ```
+
+## Configuration
+
+The default configuration is shown below.
+```lua
+{
+  -- Closing last managed buffer should close window
+  close_window = true,
+}
+```
+
+## Problems
+- I use `oil.nvim`, but it creates extraneous buffers that pollutes a window. Plugins that utilize buffers similarly are currently inconvenient to work with with `window.nvim`.
 
 ## Similar
 
