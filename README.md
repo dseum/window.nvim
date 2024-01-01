@@ -59,7 +59,7 @@ The default configuration is shown below.
 ```
 
 ## Problems
-- I use `oil.nvim`, but it creates extraneous buffers that pollutes a window. Plugins that utilize buffers similarly are currently inconvenient to work with with `window.nvim`.
+- I use `oil.nvim`, but it creates extraneous buffers that pollute a window. Plugins that utilize buffers similarly are currently inconvenient to work with with this plugin.
 
 ## Similar
 
