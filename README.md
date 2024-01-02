@@ -24,7 +24,7 @@ You can use any plugin manager. Below is an example with `lazy.nvim` along with 
 {
   "dseum/window.nvim",
   lazy = false,
-  opts = {},
+  config = true,
   keys = {
     {
       "<leader>ww",
