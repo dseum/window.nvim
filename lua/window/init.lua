@@ -201,9 +201,11 @@ M.setup = function(given_opts)
   vim.api.nvim_create_autocmd({ "BufUnload" }, {
     group = augroup,
     callback = function()
-      local bufnr = tonumber(vim.fn.expand("<abuf>")) --[[@as number]]
       local winid = vim.fn.win_getid()
-      remove_buf_and_sync(winid, bufnr)
+      if vim.fn.win_gettype(winid) == "" then
+        local bufnr = tonumber(vim.fn.expand("<abuf>")) --[[@as number]]
+        remove_buf_and_sync(winid, bufnr)
+      end
     end,
   })
 end
