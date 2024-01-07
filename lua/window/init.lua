@@ -1,3 +1,6 @@
+--- *window.nvim* Make windows intuitive again.
+--- *Window*
+
 local M = {}
 
 local bufs = {}
@@ -6,6 +9,7 @@ local wins = {}
 --- Removes window from list of windows buffer is in
 ---@param winid number
 ---@param bufnr number
+---@private
 local function remove_win(winid, bufnr)
   if bufs[bufnr] ~= nil then
     bufs[bufnr][winid] = nil
@@ -18,6 +22,7 @@ end
 --- Adds window to list of windows buffer is in
 ---@param winid number
 ---@param bufnr number
+---@private
 local function push_win(winid, bufnr)
   if bufs[bufnr] == nil then
     bufs[bufnr] = {}
@@ -28,6 +33,7 @@ end
 --- Removes buffer from list of buffers in window
 ---@param winid number
 ---@param bufnr number
+---@private
 local function remove_buf(winid, bufnr)
   if wins[winid] == nil then
     return
@@ -54,6 +60,7 @@ end
 --- Removes buffer and sync its list of windows
 ---@param winid number
 ---@param bufnr number
+---@private
 local remove_buf_and_sync = function(winid, bufnr)
   -- Check if buffer is managed
   if wins[winid] == nil then
@@ -70,6 +77,7 @@ end
 --- Adds buffer to list of buffers in window
 ---@param winid number
 ---@param bufnr number
+---@private
 local function push_buf(winid, bufnr)
   -- Delete `WindowLanding` buffer if it exists since replaced by `bufnr` buffer
   if wins[winid] == nil then
@@ -100,16 +108,19 @@ end
 --- Adds buffer and sync its list of windows
 ---@param winid number
 ---@param bufnr number
+---@private
 local push_buf_and_sync = function(winid, bufnr)
   push_buf(winid, bufnr)
   push_win(winid, bufnr)
 end
 
+---@private
 ---@type number?
 local landing_bufnr = nil
 
 --- Creates landing buffer and readds to window when needed
 ---@param winid number?
+---@private
 local load_landing_buf = function(winid)
   winid = winid or vim.fn.win_getid()
   if landing_bufnr == nil then
@@ -146,6 +157,9 @@ local load_landing_buf = function(winid)
 end
 
 --- Setup
+---
+--- - Sets `hidden` option as `true`
+--- - Creates autocommands to track buffers and windows
 M.setup = function()
   -- Allow hidden buffers (required)
   vim.o.hidden = true

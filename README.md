@@ -1,22 +1,20 @@
 # window.nvim
 
-Closing a file shifts window layouts? The file disappears from all windows? What's the next buffer that'll appear?
+Deleting a buffer closes multiple windows? What's the next buffer that'll display in the window?
 
 Make windows intuitive again. 
 
 ## Features
 
-On setup, the plugin mandates `vim.o.hidden = true`, i.e. the use of hidden buffers. But that is not expressive enough for managing buffers.
+This plugin introduces the concept of opening and closing buffers in windows. 
 
-Logically, we want our actions on buffers in a window to be locally scoped. But because windows share all buffers, deletion of a buffer in one window will mean even if we cannot expect it to still live in another window we were previously editing the buffer. Furthermore, we do not know which buffer will appear next in that window since the decision is not based off a local stack.
+Windows are no longer just views. Instead, each window keeps a stack of buffers that determines the next buffer to display upon closing the active buffer. Use `close_buf` instead of manually deciding between hiding/deleting/wiping out a buffer.
 
-This plugin allows the user to forget about the nuanaces of hiding, deleting, and wiping out a buffer. Instead, all of that is cleanly managed by the plugin to provide the single concept of "closing" a buffer with `close_buf`.
-
-- Windows keep a local stack of which buffers were previously used. You can always predict which buffer will appear next.
-- You can use `split_win` to split a window while maintaining the original window layout and focus.
-- This works with whatever plugin you use to navigate buffers.
+We should, then, also expect the newly split window to not be in the same location as the original window. To do this, use `split_win`.
 
 ## Installation
+
+On setup, the plugin mandates `vim.o.hidden = true`, i.e. the use of hidden buffers.
 
 You can use any plugin manager. Below is an example with `lazy.nvim` along with helpful keymaps.
 
@@ -24,7 +22,7 @@ You can use any plugin manager. Below is an example with `lazy.nvim` along with 
 {
   "dseum/window.nvim",
   lazy = false,
-  config = true,
+  opts = {},
   keys = {
     {
       "<leader>ww",
@@ -35,13 +33,18 @@ You can use any plugin manager. Below is an example with `lazy.nvim` along with 
     {
       "<C-w>s",
       function()
-        require("window").split_win("h")
+        require("window").split_win({
+          default_buffer = false
+        })
       end,
     },
     {
       "<C-w>v",
       function()
-        require("window").split_win("v")
+        require("window").split_win({
+          orientation = "v",
+          default_buffer = false
+        })
       end,
     },
   },
@@ -50,13 +53,23 @@ You can use any plugin manager. Below is an example with `lazy.nvim` along with 
 
 ## Configuration
 
-The default configuration is shown below.
-```lua
-{
-  -- Closing last managed buffer should close window
-  close_window = true,
-}
-```
+Setup has no configuration.
+
+### `close_buf`
+
+| Property    | Type    | Description    |
+|---------------- | --------------- | --------------- |
+| target.buffer    | `number?`    | Buffer to close. Must set `target.window` an be valid.    |
+| target.window    | `number?`    | Window to close `target.buffer` in.    |
+| close_window   | `boolean?`   | Whether closing last buffer in window closes the window or loads the landing buffer.   |
+
+
+### `split_win`
+
+| Property    | Type    | Description    |
+|---------------- | --------------- | --------------- |
+| orientation    | `"h"` or `"v"`    | Horizontal or vertical.    |
+| default_buffer | `false` or `fun(split_winid: number)` | Default opens a landing buffer while `false` is Neovim's default. The callback loads a desired buffer. |
 
 ## Problems
 - I use `oil.nvim`, but it creates extraneous buffers that pollute a window. Plugins that utilize buffers similarly are currently inconvenient to work with with this plugin.

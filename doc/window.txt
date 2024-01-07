@@ -1,10 +1,13 @@
-==============================================================================
+*window.nvim* Make windows intuitive again.
+*Window*
+
 ------------------------------------------------------------------------------
                                                                      *M.setup()*
-                            `M.setup`({given_opts})
+                                  `M.setup`()
 Setup
-Parameters ~
-{given_opts} `(table?)`
+
+- Sets `hidden` option as `true`
+- Creates autocommands to track buffers and windows
 
 ------------------------------------------------------------------------------
                                                                    *M.inspect()*
@@ -12,19 +15,18 @@ Parameters ~
 Inspects internal state and prints
 
 ------------------------------------------------------------------------------
-                                                                 *M.split_win()*
-                     `M.split_win`({orientation}, {winid})
-Splits window by orientation and maintains original layout and focus
+                                                                   *M.split_win*
+                                 `M.split_win`
+Splits current window while maintaining layout
 Parameters ~
-{orientation} "h"|"v"
-{winid} `(number?)`
+{given_opts} `(table?)`
 
 ------------------------------------------------------------------------------
                                                                    *M.close_buf*
                                  `M.close_buf`
 Closes current buffer
 Parameters ~
-{target} `(table?)`
+{given_opts} `(table?)`
 
 
  vim:tw=78:ts=8:noet:ft=help:norl:

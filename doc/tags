@@ -1,12 +1,6 @@
 M.close_buf	window.txt	/*M.close_buf*
 M.inspect()	window.txt	/*M.inspect()*
 M.setup()	window.txt	/*M.setup()*
-M.split_win()	window.txt	/*M.split_win()*
-landing_bufnr	window.txt	/*landing_bufnr*
-push_buf()	window.txt	/*push_buf()*
-push_buf_and_sync()	window.txt	/*push_buf_and_sync()*
-push_landing_buf()	window.txt	/*push_landing_buf()*
-push_win()	window.txt	/*push_win()*
-remove_buf()	window.txt	/*remove_buf()*
-remove_buf_and_sync()	window.txt	/*remove_buf_and_sync()*
-remove_win()	window.txt	/*remove_win()*
+M.split_win	window.txt	/*M.split_win*
+Window	window.txt	/*Window*
+window.nvim	window.txt	/*window.nvim*
