@@ -289,14 +289,29 @@ M.close_buf = vim.schedule_wrap(function(given_opts)
   then
     remove_buf_and_sync(winid, bufnr)
     if vim.tbl_count(wins[winid].bufs) == 0 then
-      if method_opts.close_window and #vim.api.nvim_list_wins() > 1 then
+      local last_window = #vim.api.nvim_list_wins() <= 1
+      if method_opts.close_window and not last_window then
         -- Close window
         vim.api.nvim_win_call(winid, function()
-          vim.cmd.close({ bang = true })
+          vim.cmd.close()
         end)
       else
         -- Either `opts.close_window` is false or there is only one window
-        load_landing_buf(winid)
+        if
+          landing_buf
+          and last_window
+          and vim.fn.confirm(
+              "Close last window and quit?",
+              "&Yes\n&No",
+              "Question"
+            )
+            == 1
+        then
+          vim.cmd.quit()
+        end
+        if not landing_buf then
+          load_landing_buf(winid)
+        end
       end
     else
       vim.api.nvim_win_set_buf(winid, wins[winid].root.nr)
