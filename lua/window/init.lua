@@ -1,10 +1,5 @@
 local M = {}
 
---
-local opts = {
-  close_window = true,
-}
-
 local bufs = {}
 local wins = {}
 
@@ -59,7 +54,7 @@ end
 --- Removes buffer and sync its list of windows
 ---@param winid number
 ---@param bufnr number
-local function remove_buf_and_sync(winid, bufnr)
+local remove_buf_and_sync = function(winid, bufnr)
   -- Check if buffer is managed
   if wins[winid] == nil then
     return
@@ -105,7 +100,7 @@ end
 --- Adds buffer and sync its list of windows
 ---@param winid number
 ---@param bufnr number
-local function push_buf_and_sync(winid, bufnr)
+local push_buf_and_sync = function(winid, bufnr)
   push_buf(winid, bufnr)
   push_win(winid, bufnr)
 end
@@ -114,9 +109,9 @@ end
 local landing_bufnr = nil
 
 --- Creates landing buffer and readds to window when needed
----@param winid number
----@return number
-local function push_landing_buf(winid)
+---@param winid number?
+local load_landing_buf = function(winid)
+  winid = winid or vim.fn.win_getid()
   if landing_bufnr == nil then
     landing_bufnr = vim.api.nvim_create_buf(true, true)
 
@@ -148,15 +143,10 @@ local function push_landing_buf(winid)
   else
     vim.api.nvim_win_set_buf(winid, landing_bufnr)
   end
-  return landing_bufnr
 end
 
 --- Setup
----@param given_opts table?
-M.setup = function(given_opts)
-  -- Set `opts`
-  opts = vim.tbl_extend("keep", given_opts, opts)
-
+M.setup = function()
   -- Allow hidden buffers (required)
   vim.o.hidden = true
 
@@ -221,83 +211,84 @@ M.inspect = function()
   )
 end
 
---- Splits window by orientation and maintains original layout and focus
----@param orientation "h"|"v"
----@param winid number?
-M.split_win = function(orientation, winid)
-  winid = winid or vim.fn.win_getid()
+--- Splits current window while maintaining layout
+---@param given_opts table?
+M.split_win = vim.schedule_wrap(function(given_opts)
+  local method_opts = vim.tbl_extend("keep", given_opts or {}, {
+    orientation = "h",
+    keep_focus = false,
+    default_buffer = function()
+      load_landing_buf()
+    end,
+  })
 
-  if orientation == "h" then
-    vim.api.nvim_win_call(winid, function()
-      vim.cmd("rightbelow split")
-    end)
-  elseif orientation == "v" then
-    vim.api.nvim_win_call(winid, function()
-      vim.cmd("rightbelow vsplit")
-    end)
+  local winid = vim.fn.win_getid()
+  local type = "split"
+  if method_opts.orientation == "v" then
+    type = "vsplit"
   end
-  vim.fn.win_gotoid(winid)
-end
+  vim.cmd("rightbelow " .. type)
+  local split_winid = vim.fn.win_getid()
+  vim.api.nvim_win_call(split_winid, function()
+    local bufnr = vim.api.nvim_get_current_buf()
+    if method_opts.default_buffer then
+      method_opts.default_buffer(split_winid)
+      remove_buf_and_sync(split_winid, bufnr)
+    end
+  end)
+  if method_opts.keep_focus then
+    vim.fn.win_gotoid(winid)
+  end
+end)
 
 --- Closes current buffer
----@param target table?
-M.close_buf = vim.schedule_wrap(function(target)
-  local bufnr
-  local winid
-  if target == nil then
-    bufnr = vim.api.nvim_get_current_buf()
-    winid = vim.fn.win_getid()
-  else
-    if target.bufnr == nil or target.winid == nil then
-      return
-    end
-    bufnr = target.bufnr
-    winid = target.winid
-  end
+---@param given_opts table?
+M.close_buf = vim.schedule_wrap(function(given_opts)
+  local method_opts = vim.tbl_extend("keep", given_opts or {}, {
+    target = {
+      buffer = vim.api.nvim_get_current_buf(),
+      window = vim.fn.win_getid(),
+    },
+    close_window = true,
+  })
 
-  -- Check if buffer is managed in current window
-  if wins[winid].bufs[bufnr] == nil then
-    return
-  end
-
+  local bufnr = method_opts.target.buffer
+  local winid = method_opts.target.window
+  local landing_buf = vim.api.nvim_get_option_value("filetype", {
+    buf = bufnr,
+  }) == "WindowLanding"
+  local deleting = wins[winid].bufs[bufnr] == nil
+    or vim.tbl_count(bufs[bufnr]) == 1
   if
-    vim.api.nvim_get_option_value("filetype", {
-      buf = bufnr,
-    }) ~= "WindowLanding"
+    not deleting
+    or not vim.api.nvim_get_option_value("modified", { buf = bufnr })
+    or vim.fn.confirm(
+        string.format(
+          "Buffer %d has unsaved changes. Close forcefully and discard?",
+          bufnr
+        ),
+        "&Yes\n&No",
+        2,
+        "Question"
+      )
+      == 1
   then
-    local deleting = vim.tbl_count(bufs[bufnr]) == 1
-    if
-      not deleting
-      or not vim.api.nvim_get_option_value("modified", { buf = bufnr })
-      or vim.fn.confirm(
-          string.format(
-            "Buffer %d has unsaved changes. Close forcefully and discard?",
-            bufnr
-          ),
-          "&Yes\n&No",
-          2,
-          "Question"
-        )
-        == 1
-    then
-      remove_buf_and_sync(winid, bufnr)
-      local closing_window = opts.close_window and #vim.api.nvim_list_wins() > 1
-      if vim.tbl_count(wins[winid].bufs) == 0 then
-        if closing_window then
-          -- Close window
-          vim.api.nvim_win_call(winid, function()
-            vim.cmd.close({ bang = true })
-          end)
-        else
-          -- Either `opts.close_window` is false or there is only one window
-          push_landing_buf(winid)
-        end
+    remove_buf_and_sync(winid, bufnr)
+    if vim.tbl_count(wins[winid].bufs) == 0 then
+      if method_opts.close_window and #vim.api.nvim_list_wins() > 1 then
+        -- Close window
+        vim.api.nvim_win_call(winid, function()
+          vim.cmd.close({ bang = true })
+        end)
       else
-        vim.api.nvim_win_set_buf(winid, wins[winid].root.nr)
+        -- Either `opts.close_window` is false or there is only one window
+        load_landing_buf(winid)
       end
-      if deleting then
-        vim.api.nvim_buf_delete(bufnr, { force = true })
-      end
+    else
+      vim.api.nvim_win_set_buf(winid, wins[winid].root.nr)
+    end
+    if deleting and not landing_buf then
+      vim.api.nvim_buf_delete(bufnr, { force = true })
     end
   end
 end)
