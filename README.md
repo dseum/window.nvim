@@ -14,9 +14,7 @@ We should, then, also expect the newly split window to not be in the same locati
 
 ## Installation
 
-On setup, the plugin mandates `vim.o.hidden = true`, i.e. the use of hidden buffers.
-
-You can use any plugin manager. Below is an example with `lazy.nvim` along with helpful keymaps.
+You can use any plugin manager. Below is an example with `lazy.nvim` along with helpful keymaps. Note that on `setup`, the plugin mandates the use of hidden buffers.
 
 ```lua
 {
@@ -53,14 +51,12 @@ You can use any plugin manager. Below is an example with `lazy.nvim` along with 
 
 ## Configuration
 
-Setup has no configuration.
+`setup` has no configuration.
 
 ### `close_buf`
 
 | Property    | Type    | Description    |
 |---------------- | --------------- | --------------- |
-| target.buffer    | `number?`    | Buffer to close. Must set `target.window` an be valid.    |
-| target.window    | `number?`    | Window to close `target.buffer` in.    |
 | close_window   | `boolean?`   | Whether closing last buffer in window closes the window or loads the landing buffer.   |
 
 
