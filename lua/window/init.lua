@@ -187,7 +187,6 @@ M.setup = function()
       local winid = vim.fn.win_getid()
       if vim.fn.win_gettype(winid) == "" then
         local bufnr = args.buf
-        print("Entered", bufnr)
         push_buf_and_sync(winid, bufnr)
       end
     end,
@@ -211,9 +210,7 @@ M.setup = function()
     callback = function(args)
       local winid = vim.fn.win_getid()
       local bufnr = args.buf
-      print(vim.fn.win_gettype(winid), bufnr)
       if vim.fn.win_gettype(winid) == "" then
-        print("Unloaded", bufnr)
         remove_buf_and_sync(winid, bufnr)
       end
     end,
