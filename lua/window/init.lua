@@ -156,6 +156,20 @@ local load_landing_buf = function(winid)
   end
 end
 
+--- Safely sets active buffer in window
+---@param winid number?
+---@return boolean success Whether buffer was set
+---@private
+local safe_win_set_buf = function(winid, bufnr)
+  -- Assume `winid` is valid
+  if vim.api.nvim_buf_is_valid(bufnr) then
+    vim.api.nvim_win_set_buf(winid, bufnr)
+    return true
+  end
+  remove_buf_and_sync(winid, bufnr)
+  return false
+end
+
 --- Setup
 ---
 --- - Sets `hidden` option as `true`
@@ -165,34 +179,24 @@ M.setup = function()
   vim.o.hidden = true
 
   -- Buffer open autcmd in neovim lua
-  local augroup = vim.api.nvim_create_augroup("WindowPlugin", {})
+  local augroup = vim.api.nvim_create_augroup("Window", {})
 
-  vim.api.nvim_create_autocmd({ "BufWinEnter" }, {
+  vim.api.nvim_create_autocmd({ "BufWinEnter", "WinNew" }, {
     group = augroup,
-    callback = function()
+    callback = function(args)
       local winid = vim.fn.win_getid()
       if vim.fn.win_gettype(winid) == "" then
-        local bufnr = tonumber(vim.fn.expand("<abuf>")) --[[@as number]]
+        local bufnr = args.buf
+        print("Entered", bufnr)
         push_buf_and_sync(winid, bufnr)
       end
     end,
   })
 
-  vim.api.nvim_create_autocmd({ "WinNew" }, {
+  vim.api.nvim_create_autocmd("WinClosed", {
     group = augroup,
-    callback = function()
-      local winid = vim.fn.win_getid()
-      if vim.fn.win_gettype(winid) == "" then
-        local bufnr = tonumber(vim.fn.expand("<abuf>")) --[[@as number]]
-        push_buf_and_sync(winid, bufnr)
-      end
-    end,
-  })
-
-  vim.api.nvim_create_autocmd({ "WinClosed" }, {
-    group = augroup,
-    callback = function()
-      local winid = tonumber(vim.fn.expand("<amatch>")) --[[@as number]]
+    callback = function(args)
+      local winid = tonumber(args.match) --[[@as number]]
       if wins[winid] ~= nil then
         for _, buf in pairs(wins[winid].bufs) do
           remove_win(winid, buf.nr)
@@ -202,12 +206,14 @@ M.setup = function()
     end,
   })
 
-  vim.api.nvim_create_autocmd({ "BufUnload" }, {
+  vim.api.nvim_create_autocmd("BufUnload", {
     group = augroup,
-    callback = function()
+    callback = function(args)
       local winid = vim.fn.win_getid()
+      local bufnr = args.buf
+      print(vim.fn.win_gettype(winid), bufnr)
       if vim.fn.win_gettype(winid) == "" then
-        local bufnr = tonumber(vim.fn.expand("<abuf>")) --[[@as number]]
+        print("Unloaded", bufnr)
         remove_buf_and_sync(winid, bufnr)
       end
     end,
@@ -259,15 +265,11 @@ end)
 ---@param given_opts table?
 M.close_buf = vim.schedule_wrap(function(given_opts)
   local method_opts = vim.tbl_extend("keep", given_opts or {}, {
-    target = {
-      buffer = vim.api.nvim_get_current_buf(),
-      window = vim.fn.win_getid(),
-    },
     close_window = true,
   })
 
-  local bufnr = method_opts.target.buffer
-  local winid = method_opts.target.window
+  local bufnr = vim.api.nvim_get_current_buf()
+  local winid = vim.fn.win_getid()
   local landing_buf = vim.api.nvim_get_option_value("filetype", {
     buf = bufnr,
   }) == "WindowLanding"
@@ -288,34 +290,39 @@ M.close_buf = vim.schedule_wrap(function(given_opts)
       == 1
   then
     remove_buf_and_sync(winid, bufnr)
-    if vim.tbl_count(wins[winid].bufs) == 0 then
-      local last_window = #vim.api.nvim_list_wins() <= 1
-      if method_opts.close_window and not last_window then
-        -- Close window
-        vim.api.nvim_win_call(winid, function()
-          vim.cmd.close()
-        end)
-      else
-        -- Either `opts.close_window` is false or there is only one window
-        if
-          landing_buf
-          and last_window
-          and vim.fn.confirm(
-              "Close last window and quit?",
-              "&Yes\n&No",
-              "Question"
-            )
-            == 1
-        then
-          vim.cmd.quit()
+    local function set_buf_with_root()
+      if vim.tbl_count(wins[winid].bufs) == 0 then
+        local last_window = #vim.api.nvim_list_wins() <= 1
+        if method_opts.close_window and not last_window then
+          -- Close window
+          vim.api.nvim_win_call(winid, function()
+            vim.cmd.close()
+          end)
+        else
+          -- Either `opts.close_window` is false or there is only one window
+          if
+            landing_buf
+            and last_window
+            and vim.fn.confirm(
+                "Close last window and quit?",
+                "&Yes\n&No",
+                "Question"
+              )
+              == 1
+          then
+            vim.cmd.quit()
+          end
+          if not landing_buf then
+            load_landing_buf(winid)
+          end
         end
-        if not landing_buf then
-          load_landing_buf(winid)
+      else
+        if not safe_win_set_buf(winid, wins[winid].root.nr) then
+          set_buf_with_root()
         end
       end
-    else
-      vim.api.nvim_win_set_buf(winid, wins[winid].root.nr)
     end
+    set_buf_with_root()
     if deleting and not landing_buf then
       vim.api.nvim_buf_delete(bufnr, { force = true })
     end
