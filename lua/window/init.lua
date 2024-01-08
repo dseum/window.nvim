@@ -157,7 +157,8 @@ local load_landing_buf = function(winid)
 end
 
 --- Safely sets active buffer in window
----@param winid number?
+---@param winid number
+---@param bufnr number
 ---@return boolean success Whether buffer was set
 ---@private
 local safe_win_set_buf = function(winid, bufnr)
