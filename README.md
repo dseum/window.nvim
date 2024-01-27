@@ -2,11 +2,11 @@
 
 Deleting a buffer closes multiple windows? What's the next buffer that'll display in the window?
 
-Make windows intuitive again. 
+Make windows intuitive again.
 
 ## Features
 
-This plugin introduces the concept of opening and closing buffers in windows. 
+This plugin introduces the concept of opening and closing buffers in windows.
 
 Windows are no longer just views. Instead, each window keeps a stack of buffers that determines the next buffer to display upon closing the active buffer. Use `close_buf` instead of manually deciding between hiding/deleting/wiping out a buffer.
 
@@ -55,19 +55,19 @@ You can use any plugin manager. Below is an example with `lazy.nvim` along with 
 
 ### `close_buf`
 
-| Property    | Type    | Description    |
-|---------------- | --------------- | --------------- |
-| close_window   | `boolean?`   | Whether closing last buffer in window closes the window or loads the landing buffer.   |
-
+| Property     | Type       | Description                                                                          |
+| ------------ | ---------- | ------------------------------------------------------------------------------------ |
+| close_window | `boolean?` | Whether closing last buffer in window closes the window or loads the landing buffer. |
 
 ### `split_win`
 
-| Property    | Type    | Description    |
-|---------------- | --------------- | --------------- |
-| orientation    | `"h"` or `"v"`    | Horizontal or vertical.    |
+| Property       | Type                                  | Description                                                                                            |
+| -------------- | ------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| orientation    | `"h"` or `"v"`                        | Horizontal or vertical.                                                                                |
 | default_buffer | `false` or `fun(split_winid: number)` | Default opens a landing buffer while `false` is Neovim's default. The callback loads a desired buffer. |
 
 ## Problems
+
 - I use `oil.nvim`, but it creates extraneous buffers that pollute a window. Plugins that utilize buffers similarly are currently inconvenient to work with with this plugin.
 
 ## Similar
