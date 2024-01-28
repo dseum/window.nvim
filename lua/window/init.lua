@@ -179,9 +179,7 @@ M.setup = function()
   -- Allow hidden buffers (required)
   vim.o.hidden = true
 
-  -- Buffer open autcmd in neovim lua
   local augroup = vim.api.nvim_create_augroup("Window", {})
-
   vim.api.nvim_create_autocmd({ "BufWinEnter", "WinNew" }, {
     group = augroup,
     callback = function(args)
@@ -192,7 +190,6 @@ M.setup = function()
       end
     end,
   })
-
   vim.api.nvim_create_autocmd("WinClosed", {
     group = augroup,
     callback = function(args)
@@ -205,7 +202,6 @@ M.setup = function()
       end
     end,
   })
-
   vim.api.nvim_create_autocmd("BufUnload", {
     group = augroup,
     callback = function(args)
