@@ -179,7 +179,7 @@ M.setup = function()
   -- Allow hidden buffers (required)
   vim.o.hidden = true
 
-  local augroup = vim.api.nvim_create_augroup("Window", {})
+  local augroup = vim.api.nvim_create_augroup("window.nvim", {})
   vim.api.nvim_create_autocmd({ "BufWinEnter", "WinNew" }, {
     group = augroup,
     callback = function(args)
