@@ -19,33 +19,24 @@ You can use any plugin manager. Below is an example with `lazy.nvim` along with 
 ```lua
 {
   "dseum/window.nvim",
-  lazy = false,
-  opts = {},
-  keys = {
-    {
-      "<leader>ww",
-      function()
-        require("window").close_buf()
-      end,
-    },
-    {
-      "<C-w>s",
-      function()
-        require("window").split_win({
-          default_buffer = false
-        })
-      end,
-    },
-    {
-      "<C-w>v",
-      function()
-        require("window").split_win({
-          orientation = "v",
-          default_buffer = false
-        })
-      end,
-    },
-  },
+  config = function()
+    local window = require("window")
+    window.setup()
+    vim.keymap.set("n", "<Leader>ww", function()
+      window.close_buf()
+    end)
+    vim.keymap.set("n", "<C-w>s", function()
+      window.split_win({
+        default_buffer = false,
+      })
+    end)
+    vim.keymap.set("n", "<C-w>v", function()
+      window.split_win({
+        orientation = "v",
+        default_buffer = false,
+      })
+    end)
+  end
 }
 ```
 
@@ -65,10 +56,6 @@ You can use any plugin manager. Below is an example with `lazy.nvim` along with 
 | -------------- | ------------------------------------- | ------------------------------------------------------------------------------------------------------ |
 | orientation    | `"h"` or `"v"`                        | Horizontal or vertical.                                                                                |
 | default_buffer | `false` or `fun(split_winid: number)` | Default opens a landing buffer while `false` is Neovim's default. The callback loads a desired buffer. |
-
-## Problems
-
-- I use `oil.nvim`, but it creates extraneous buffers that pollute a window. Plugins that utilize buffers similarly are currently inconvenient to work with with this plugin.
 
 ## Similar
 
