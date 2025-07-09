@@ -1,4 +1,4 @@
-*window.nvim* Make windows intuitive again.
+*window.nvim* Make windows intuitive.
 *Window*
 
 ==============================================================================

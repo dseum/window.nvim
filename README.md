@@ -2,7 +2,7 @@
 
 Deleting a buffer closes multiple windows? What's the next buffer that'll display in the window?
 
-Make windows intuitive again.
+Make windows intuitive.
 
 ## Features
 
